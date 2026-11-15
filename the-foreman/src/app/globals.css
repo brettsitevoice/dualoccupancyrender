@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+/* Design tokens: off-white paper, dark navy ink, orange accent. */
+@theme {
+  --color-paper: #f5f3ee;
+  --color-card: #fffdf9;
+  --color-ink: #1d2733;
+  --color-accent: #d9661f;
+  --color-accent-deep: #b9541a;
+  --color-good: #2e7d5b;
+  --color-warn: #9a6207;
+  --color-bad: #b23a2b;
+
+  --font-display: "Barlow Condensed", "Arial Narrow", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --animate-rise: rise 0.28s ease-out both;
+  --animate-ring: ring 1.4s ease-out infinite;
+  --animate-caret: caret 1s steps(2, start) infinite;
+  --animate-dot: dot 1.2s ease-in-out infinite;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes ring {
+    0% {
+      box-shadow: 0 0 0 0 rgb(217 102 31 / 0.55);
+    }
+    100% {
+      box-shadow: 0 0 0 18px rgb(217 102 31 / 0);
+    }
+  }
+  @keyframes caret {
+    to {
+      visibility: hidden;
+    }
+  }
+  @keyframes dot {
+    0%,
+    60%,
+    100% {
+      opacity: 0.25;
+      transform: translateY(0);
+    }
+    30% {
+      opacity: 1;
+      transform: translateY(-3px);
+    }
+  }
+}
+
+html {
+  color-scheme: light;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.5;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+a,
+summary,
+label {
+  touch-action: manipulation;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Headings that receive focus when a screen changes shouldn't show a ring. */
+[data-screen-heading]:focus {
+  outline: none;
+}
+
+dialog::backdrop {
+  background: rgb(29 39 51 / 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  body {
+    background: #fff;
+    font-size: 12pt;
+  }
+  /* Print the score bars and verdict marks, which browsers drop by default. */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  @page {
+    margin: 14mm;
+  }
+}
