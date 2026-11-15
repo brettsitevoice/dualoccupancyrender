@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SiteVoice Build Sequence - 37 Osborne St Gerringong</title>
+<style>
+  :root { --bg:#0e1420; --panel:rgba(14,20,32,.86); --line:rgba(255,255,255,.1); --txt:#e9eef6; --dim:#93a0b4; --acc:#ff7a1a; --acc2:#ffb347; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--txt); font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; overflow:hidden; }
+  canvas#c { position:fixed; inset:0; width:100%; height:100%; display:block; }
+  .panel { position:fixed; background:var(--panel); border:1px solid var(--line); border-radius:14px; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+  #side { top:14px; left:14px; bottom:14px; width:300px; display:flex; flex-direction:column; overflow:hidden; }
+  #brand { padding:14px 16px 12px; border-bottom:1px solid var(--line); }
+  #brand .logo { display:flex; align-items:center; gap:8px; font-weight:700; font-size:17px; letter-spacing:.2px; }
+  #brand .dot { width:22px; height:22px; border-radius:50%; background:linear-gradient(135deg,var(--acc),var(--acc2)); display:grid; place-items:center; }
+  #brand .dot i { width:8px; height:8px; border-radius:50%; background:#0e1420; display:block; }
+  #brand .proj { margin-top:6px; color:var(--dim); font-size:12px; }
+  #brand .proj b { color:var(--txt); font-weight:600; display:block; font-size:13px; }
+  #stages { flex:1; overflow:auto; padding:6px; }
+  .st { display:flex; gap:10px; align-items:center; width:100%; text-align:left; background:none; border:0; color:var(--dim); padding:7px 9px; border-radius:9px; cursor:pointer; font:inherit; }
+  .st:hover { background:rgba(255,255,255,.06); }
+  .st .n { width:24px; height:24px; flex:none; border-radius:50%; border:1px solid var(--line); display:grid; place-items:center; font-size:11px; font-variant-numeric:tabular-nums; }
+  .st.done { color:var(--txt); }
+  .st.done .n { background:rgba(255,122,26,.18); border-color:rgba(255,122,26,.5); color:var(--acc2); }
+  .st.cur { background:rgba(255,122,26,.14); color:#fff; }
+  .st.cur .n { background:var(--acc); border-color:var(--acc); color:#16110a; font-weight:700; }
+  #info { top:14px; right:14px; width:310px; padding:14px 16px; }
+  #info .k { color:var(--acc2); font-size:11px; letter-spacing:1.2px; text-transform:uppercase; }
+  #info h2 { margin:2px 0 6px; font-size:19px; line-height:1.2; }
+  #info p { margin:0 0 10px; color:#c6cfdd; font-size:13px; }
+  #info .meta { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  #info .meta div { background:rgba(255,255,255,.05); border-radius:9px; padding:7px 9px; font-size:12px; color:var(--dim); }
+  #info .meta b { display:block; color:var(--txt); font-size:14px; font-variant-numeric:tabular-nums; }
+  #bar { height:5px; background:rgba(255,255,255,.08); border-radius:3px; margin-top:10px; overflow:hidden; }
+  #bar i { display:block; height:100%; width:0; background:linear-gradient(90deg,var(--acc),var(--acc2)); transition:width .5s; }
+  #info small { display:block; margin-top:8px; color:var(--dim); font-size:11px; }
+  #tools { right:14px; top:auto; bottom:150px; padding:8px; display:flex; flex-wrap:wrap; gap:6px; width:310px; }
+  .chip { background:rgba(255,255,255,.06); color:var(--txt); border:1px solid var(--line); border-radius:8px; padding:6px 9px; font:inherit; font-size:12px; cursor:pointer; }
+  .chip:hover { background:rgba(255,255,255,.12); }
+  .chip.on { background:rgba(255,122,26,.2); border-color:var(--acc); color:var(--acc2); }
+  #dock { left:328px; right:14px; bottom:14px; padding:10px 14px 12px; }
+  #ctl { display:flex; align-items:center; gap:8px; }
+  #ctl button { width:36px; height:36px; border-radius:50%; border:1px solid var(--line); background:rgba(255,255,255,.06); color:var(--txt); font-size:14px; cursor:pointer; flex:none; }
+  #ctl button#play { background:var(--acc); border-color:var(--acc); color:#16110a; width:42px; height:42px; font-size:16px; }
+  #tl { flex:1; accent-color:var(--acc); height:28px; min-width:60px; }
+  #lbl { width:54px; text-align:right; color:var(--dim); font-variant-numeric:tabular-nums; font-size:12px; flex:none; }
+  #cmdrow { display:flex; gap:8px; margin-top:8px; align-items:center; }
+  #mic { width:36px; height:36px; border-radius:50%; border:1px solid var(--line); background:rgba(255,255,255,.06); color:var(--txt); cursor:pointer; flex:none; font-size:15px; }
+  #mic.live { background:#e5484d; border-color:#e5484d; animation:pulse 1s infinite; }
+  @keyframes pulse { 50% { box-shadow:0 0 0 8px rgba(229,72,77,.18); } }
+  #cmd { flex:1; min-width:0; background:rgba(0,0,0,.35); border:1px solid var(--line); color:var(--txt); border-radius:10px; padding:9px 12px; font:inherit; outline:none; }
+  #cmd:focus { border-color:var(--acc); }
+  #reply { margin-top:7px; color:var(--acc2); font-size:12.5px; min-height:18px; }
+  #sec { display:none; align-items:center; gap:8px; width:100%; font-size:12px; color:var(--dim); }
+  #sec input { flex:1; accent-color:var(--acc); }
+  #err { position:fixed; inset:0; display:none; place-items:center; padding:30px; text-align:center; color:var(--dim); }
+  @media (max-width:900px) {
+    #side { width:auto; right:14px; bottom:auto; max-height:132px; }
+    #stages { display:flex; overflow-x:auto; overflow-y:hidden; padding:6px; }
+    .st { width:auto; flex:none; white-space:nowrap; }
+    #brand .proj { display:none; }
+    #brand { padding:9px 12px; }
+    #info { top:156px; left:14px; right:14px; width:auto; padding:10px 12px; }
+    #info p, #info small { display:none; }
+    #tools { left:14px; right:14px; width:auto; bottom:160px; }
+    #dock { left:14px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="side" class="panel">
+  <div id="brand">
+    <div class="logo"><span class="dot"><i></i></span>SiteVoice <span style="color:var(--dim);font-weight:400;font-size:12px">Build Sequence</span></div>
+    <div class="proj"><b>Proposed Dual Occupancy</b>37 Osborne St Gerringong NSW · Lot 90 DP 241462</div>
+  </div>
+  <div id="stages"></div>
+</div>
+
+<div id="info" class="panel">
+  <div class="k" id="ik">Stage 0 of 16</div>
+  <h2 id="ih">Existing site</h2>
+  <p id="ip"></p>
+  <div class="meta">
+    <div>Level<b id="irl">-</b></div>
+    <div>Program (indicative)<b id="iwk">-</b></div>
+  </div>
+  <div id="bar"><i></i></div>
+  <small>Massing model from DA set Rev 1 and build-spec.md. Durations are indicative only. Not for construction.</small>
+</div>
+
+<div id="tools" class="panel">
+  <button class="chip" data-view="nw">NW view</button>
+  <button class="chip" data-view="street">Street</button>
+  <button class="chip" data-view="aerial">Aerial</button>
+  <button class="chip" data-view="rear">Rear</button>
+  <button class="chip" id="bIso">Isolate stage</button>
+  <button class="chip" id="bSec">Section cut</button>
+  <button class="chip" id="bSay">Narrate</button>
+  <div id="sec">Cut <input id="secR" type="range" min="-7.6" max="7.6" step="0.1" value="-3.3"></div>
+</div>
+
+<div id="dock" class="panel">
+  <div id="ctl">
+    <button id="prev" title="Previous stage">&#9664;</button>
+    <button id="play" title="Play build">&#9654;</button>
+    <button id="next" title="Next stage">&#9654;</button>
+    <input id="tl" type="range" min="0" max="16" step="1" value="0" aria-label="Construction stage">
+    <span id="lbl">0 / 16</span>
+  </div>
+  <div id="cmdrow">
+    <button id="mic" title="Speak a command">&#127908;</button>
+    <input id="cmd" placeholder='Ask SiteVoice: "show roof framing", "stage 7", "what is next", "section cut", "play"' autocomplete="off">
+  </div>
+  <div id="reply"></div>
+</div>
+
+<div id="err">3D could not start in this browser.</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* ---------- Build spec (metres; y = RL - 18.00) ---------- */
+const RL0 = 18.0;
+const LOT_W = 15.240, LOT_D = 36.576, HALF = LOT_W / 2;
+const Y_GAR = 18.730 - RL0, Y_GF = 22.230 - RL0, Y_FF = 25.600 - RL0, Y_RIDGE = 29.520 - RL0;
+const PITCH = 11.5 * Math.PI / 180, T = Math.tan(PITCH);
+const GFW = 6.665, FFW = 6.4;            // half widths
+const Z_GAR0 = 6.0, Z_GAR1 = 12.4, Z_GF0 = 12.2, Z_GF1 = 22.8, Z_FF0 = 14.0, Z_BUMP = 24.87;
+const GF_TOP = Y_FF - 0.3;               // top of ground floor walls
+const GF_PEAK = GF_TOP + GFW * T;        // lower roof peak at party wall
+const nat = z => Math.min(Math.max(z, 0), 46) * (26.5 - RL0) / LOT_D;
+const roofFF = x => Y_RIDGE - Math.abs(x) * T;
+const roofGF = x => GF_PEAK - Math.abs(x) * T;
+
+const STAGES = [
+  { n:'Existing site', rl:'RL 18.00 to 26.50', wk:0, d:'Lot 15.240 m x 36.576 m rising 8.5 m from the street to the rear boundary. Existing dwelling, driveway and trees still in place.', k:[] },
+  { n:'Site strip / earthworks', rl:'Natural ground', wk:1, d:'Existing dwelling and trees removed, site fenced, topsoil stripped across the building zone.', k:['strip','earthwork','demolition','demo'] },
+  { n:'Terrain cut / fill', rl:'RL 18.58 and 22.03', wk:2, d:'Bulk excavation benches the slope into a garage pad at street level and a dwelling pad one storey above.', k:['terrain','cut','fill','excavat','bench'] },
+  { n:'Footings / foundations', rl:'Below FFL 18.730 / 22.230', wk:2, d:'Strip footings under garage and dwelling walls, bored piers along the rear cut.', k:['footing','foundation','pier'] },
+  { n:'Garage box slab', rl:'FFL 18.730', wk:1, d:'Slab on ground for the two single garages, 8.4 m wide by 6.4 m deep.', k:['garage slab','garage floor'] },
+  { n:'Garage box walls', rl:'RL 18.730 to 22.030', wk:3, d:'Core-filled blockwork garage walls and side retaining walls, ready to carry the suspended slab.', k:['garage wall','blockwork','block wall','retaining'] },
+  { n:'Suspended slab', rl:'RL 22.230', wk:3, d:'Suspended concrete slab formed and poured over the garages, tied to the ground floor slab behind.', k:['suspended','slab pour','pour','formwork'] },
+  { n:'Ground floor walls', rl:'RL 22.230 to 25.300', wk:3, d:'Timber wall framing for both dwellings with the central party wall. 5.77 m sliding door openings face the deck.', k:['ground floor wall','ground wall','ground floor'] },
+  { n:'First floor framing', rl:'RL 25.600', wk:2, d:'Floor joists and sheet flooring over the ground floor, set back 1.8 m from the front wall line.', k:['first floor framing','floor framing','joist'] },
+  { n:'First floor walls', rl:'RL 25.600 up', wk:2, d:'Upper storey wall frames with raked top plates following the 11.5 degree roof pitch.', k:['first floor wall','upper wall','upstairs','first floor'] },
+  { n:'Roof framing', rl:'Ridge RL 29.520', wk:2, d:'Skillion rafters at 11.5 degrees rising to the party wall ridge, plus the raked awning over the front balcony.', k:['roof fram','rafter','truss'] },
+  { n:'Roof cladding', rl:'Ridge RL 29.520', wk:1, d:'Metal roof sheeting, fascia and flashings. Building is now weather protected from above.', k:['roof clad','roof sheet','roofing','colorbond','roof'] },
+  { n:'External wall cladding', rl:'All levels', wk:3, d:'Concrete acrylic render to the garage and ground floor, weatherboard cladding to the first floor.', k:['external clad','clad','render','weatherboard'] },
+  { n:'Windows / doors', rl:'W01 to W16, D01 to D06', wk:2, d:'16 windows and 6 sliding doors installed, plus timber-look garage doors. Building at lock-up.', k:['window','door','glaz','lock up','lockup'] },
+  { n:'Internal linings', rl:'All levels', wk:3, d:'Plasterboard to walls and ceilings. Use Section cut to see inside.', k:['lining','plaster','gyprock','internal'] },
+  { n:'Services rough-in', rl:'Placeholder massing', wk:2, d:'Indicative water, sewer, electrical and mechanical runs with hot water units and condensers.', k:['service','plumb','electric','rough','mechanical'] },
+  { n:'Finishes / completed shell', rl:'Ridge RL 29.520', wk:4, d:'Driveway, deck tiling, glass balustrades, side stairs, fencing and landscaping. Completed shell.', k:['finish','complete','handover','landscap','done'] },
+];
+const TOTAL_WK = STAGES.reduce((a, s) => a + s.wk, 0);
+
+/* ---------- Renderer / scene ---------- */
+const canvas = document.getElementById('c');
+let renderer;
+try { renderer = new THREE.WebGLRenderer({ canvas, antialias:true }); }
+catch (e) { document.getElementById('err').style.display = 'grid'; throw e; }
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xbfd7ea);
+scene.fog = new THREE.Fog(0xbfd7ea, 90, 220);
+const camera = new THREE.PerspectiveCamera(38, 1, 0.5, 400);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.maxPolarAngle = Math.PI / 2 - 0.03;
+controls.minDistance = 8; controls.maxDistance = 140;
+
+scene.add(new THREE.HemisphereLight(0xdcecff, 0x6b5a45, 0.95));
+const sun = new THREE.DirectionalLight(0xfff1dc, 2.4);      // sun sits to the north (street side) and west
+sun.position.set(-34, 46, -30); sun.target.position.set(0, 4, 16);
+sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left:-34, right:34, top:34, bottom:-34, near:1, far:150 });
+sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
+scene.add(sun, sun.target);
+
+const clipPlane = new THREE.Plane(new THREE.Vector3(1, 0, 0), 100);   // section cut, applied to building materials only
+renderer.localClippingEnabled = true;
+
+/* ---------- Materials ---------- */
+function stripeTex(base, line, vertical, lw = 6) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+  const g = cv.getContext('2d'); g.fillStyle = base; g.fillRect(0, 0, 64, 64); g.fillStyle = line;
+  if (vertical) g.fillRect(0, 0, lw, 64); else g.fillRect(0, 0, 64, lw);
+  const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+const std = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness:.85, metalness:0, ...o });
+const wbTex = stripeTex('#8d949b', '#6f767d', false, 5); wbTex.repeat.set(1, 1 / 0.18);
+const slatTex = stripeTex('#b9773f', '#7c4a22', false, 14); slatTex.repeat.set(1, 20);
+const roofTex = stripeTex('#3d444c', '#2e343b', true, 14); roofTex.repeat.set(1, 60);
+const blockTex = stripeTex('#a9aaa8', '#8e8f8d', false, 4); blockTex.repeat.set(1, 1 / 0.2);
+const M = {
+  conc: std(0xb9bcbd), concDark: std(0x9a9d9e), block: std(0xffffff, { map:blockTex }),
+  timber: std(0xd8b27a), timberDark: std(0xb98b52), floor: std(0xcdb48a),
+  render: std(0xf1efea), wb: std(0xffffff, { map:wbTex }), roof: std(0xffffff, { map:roofTex, metalness:.35, roughness:.55 }),
+  fascia: std(0x30363d), frame: std(0x23272c, { metalness:.4, roughness:.5 }),
+  glass: new THREE.MeshPhysicalMaterial({ color:0x9fc4d8, roughness:.05, metalness:0, transparent:true, opacity:.38, side:THREE.DoubleSide }),
+  slat: std(0xffffff, { map:slatTex }), lining: std(0xfafaf6), tile: std(0xd9c7a6),
+  water: std(0x2f7fe0), hot: std(0xe0483a), sewer: std(0x6e6e6e), elec: std(0xf59b1c), duct: std(0xc9ced4, { metalness:.6, roughness:.4 }),
+  fence: std(0x8a6f52), mesh: std(0xf2c230, { transparent:true, opacity:.55, side:THREE.DoubleSide }),
+  leaf: std(0x4f8a3c), leaf2: std(0x6aa24a), trunk: std(0x6b4a30), old: std(0xd7cdbb), oldRoof: std(0x8c4a3a),
+  road: std(0x4a4d52), kerb: std(0xc8c8c4), nb: std(0xe3e1dc, { transparent:true, opacity:.55 }), pave: std(0xc2b8a6),
+  ghost: new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:.07, depthWrite:false }),
+};
+const edgeMat = new THREE.LineBasicMaterial({ color:0x1f2630, transparent:true, opacity:.32 });
+for (const k in M) if (!['road', 'kerb', 'nb'].includes(k)) M[k].clippingPlanes = [clipPlane];
+edgeMat.clippingPlanes = [clipPlane];
+
+/* ---------- Geometry helpers ---------- */
+function add(g, mesh, edges = true, shadow = true) {
+  mesh.castShadow = shadow; mesh.receiveShadow = true;
+  if (edges) mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry, 30), edgeMat));
+  g.add(mesh); return mesh;
+}
+function box(g, x0, x1, y0, y1, z0, z1, mat, edges = true) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(Math.abs(x1 - x0), Math.abs(y1 - y0), Math.abs(z1 - z0)), mat);
+  m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); return add(g, m, edges);
+}
+function pipe(g, a, b, r, mat) {
+  const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), d = B.clone().sub(A);
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, d.length(), 10), mat);
+  m.position.copy(A).addScaledVector(d, .5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); return add(g, m, false);
+}
+// sloping slab: one edge at xEdge, the other at the party wall (x = 0), rising to peakY
+function roofPlane(g, xEdge, z0, z1, peakY, thick, mat, drop = 0, edges = true) {
+  const run = Math.abs(xEdge), len = run / Math.cos(PITCH);
+  const m = new THREE.Mesh(new THREE.BoxGeometry(len, thick, z1 - z0), mat);
+  m.position.set(xEdge / 2, peakY - run / 2 * T - drop, (z0 + z1) / 2);
+  m.rotation.z = xEdge < 0 ? PITCH : -PITCH; return add(g, m, edges);
+}
+
+/* Wall system. A wall runs a -> b in plan, interior always on its local +z side.
+   One definition feeds the frame, cladding, lining and glazing stages. */
+function topFromRoof(a, b, y0, fn) {
+  const L = Math.hypot(b[0] - a[0], b[1] - a[1]), dx = (b[0] - a[0]) / L, pts = [[0, fn(a[0]) - y0]];
+  if (Math.abs(dx) > 1e-6) { const u0 = -a[0] / dx; if (u0 > .01 && u0 < L - .01) pts.push([u0, fn(0) - y0]); }
+  pts.push([L, fn(b[0]) - y0]); return pts;
+}
+function W(a, b, y0, top, ops = [], extra = {}) {
+  const L = Math.hypot(b[0] - a[0], b[1] - a[1]), d = [(b[0] - a[0]) / L, (b[1] - a[1]) / L];
+  const tp = typeof top === 'number' ? [[0, top], [L, top]] : top;
+  const openings = ops.map(o => { const u = (o.p[0] - a[0]) * d[0] + (o.p[1] - a[1]) * d[1];
+    return { u0:u - o.w / 2, u1:u + o.w / 2, v0:o.sill, v1:o.head, kind:o.kind }; });
+  return { a, b, y0, L, tp, openings, ...extra };
+}
+function topAt(w, u) {
+  for (let i = 0; i < w.tp.length - 1; i++) { const [u0, v0] = w.tp[i], [u1, v1] = w.tp[i + 1];
+    if (u <= u1 + 1e-6) return v0 + (v1 - v0) * (u - u0) / (u1 - u0); }
+  return w.tp[w.tp.length - 1][1];
+}
+function wallGroup(g, w) {
+  const grp = new THREE.Group();
+  grp.position.set(w.a[0], w.y0, w.a[1]);
+  grp.rotation.y = Math.atan2(-(w.b[1] - w.a[1]), w.b[0] - w.a[0]);
+  g.add(grp); return grp;
+}
+function wallSheet(g, w, z, depth, mat, holes = true) {
+  const s = new THREE.Shape();
+  s.moveTo(0, 0); s.lineTo(w.L, 0);
+  for (let i = w.tp.length - 1; i >= 0; i--) s.lineTo(w.tp[i][0], w.tp[i][1]);
+  s.closePath();
+  if (holes) for (const o of w.openings) {
+    const h = new THREE.Path(), v0 = Math.max(o.v0, 0.001);
+    h.moveTo(o.u0, v0); h.lineTo(o.u0, o.v1); h.lineTo(o.u1, o.v1); h.lineTo(o.u1, v0); h.closePath(); s.holes.push(h);
+  }
+  const m = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth, bevelEnabled:false }), mat);
+  m.position.z = z; add(wallGroup(g, w), m);
+}
+function wallStuds(g, w) {
+  const grp = wallGroup(g, w), D = 0.09, S = 0.045;
+  const stud = (u, v0, v1) => { if (v1 - v0 > .05) box(grp, u - S / 2, u + S / 2, v0, v1, -D / 2, D / 2, M.timber, false); };
+  box(grp, 0, w.L, 0, S, -D / 2, D / 2, M.timberDark, false);
+  for (let i = 0; i < w.tp.length - 1; i++) {                      // top plates follow the rake
+    const [u0, v0] = w.tp[i], [u1, v1] = w.tp[i + 1], len = Math.hypot(u1 - u0, v1 - v0);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(len, S * 2, D), M.timberDark);
+    m.position.set((u0 + u1) / 2, (v0 + v1) / 2 - S, 0); m.rotation.z = Math.atan2(v1 - v0, u1 - u0); add(grp, m, false);
+  }
+  const n = Math.max(1, Math.round(w.L / 0.6));
+  for (let i = 0; i <= n; i++) {
+    const u = Math.min(Math.max(i * w.L / n, S / 2), w.L - S / 2), top = topAt(w, u) - S * 2;
+    const o = w.openings.find(o => u > o.u0 && u < o.u1);
+    if (!o) stud(u, S, top); else { stud(u, S, o.v0); stud(u, o.v1 + 0.14, top); }
+  }
+  for (const o of w.openings) {
+    stud(o.u0 - S / 2, S, topAt(w, o.u0) - S * 2); stud(o.u1 + S / 2, S, topAt(w, o.u1) - S * 2);
+    box(grp, o.u0, o.u1, o.v1, o.v1 + 0.14, -D / 2, D / 2, M.timberDark, false);
+    if (o.v0 > .1) box(grp, o.u0, o.u1, o.v0 - S, o.v0, -D / 2, D / 2, M.timberDark, false);
+  }
+}
+function wallGlazing(g, w, z) {
+  const grp = wallGroup(g, w), f = 0.05;
+  for (const o of w.openings) {
+    if (o.kind === 'void') continue;
+    if (o.kind === 'garage') { box(grp, o.u0, o.u1, o.v0, o.v1, z - .03, z + .03, M.slat); continue; }
+    box(grp, o.u0, o.u1, o.v0, o.v1, z - .006, z + .006, M.glass, false).castShadow = false;
+    const bars = [[o.u0, o.u1, o.v1 - f, o.v1], [o.u0, o.u1, o.v0, o.v0 + f], [o.u0, o.u0 + f, o.v0, o.v1], [o.u1 - f, o.u1, o.v0, o.v1]];
+    const panes = Math.max(1, Math.round((o.u1 - o.u0) / 1.5));
+    for (let i = 1; i < panes; i++) { const u = o.u0 + (o.u1 - o.u0) * i / panes; bars.push([u - f / 2, u + f / 2, o.v0, o.v1]); }
+    for (const [a, b, c, d] of bars) box(grp, a, b, c, d, z - .04, z + .04, M.frame, false);
+  }
+}
+
+/* ---------- Wall schedule ---------- */
+const GH = Y_GF - 0.2 - Y_GAR;   // garage wall height to slab soffit
+const garageWalls = [
+  W([-4.3, 6.1], [4.3, 6.1], Y_GAR, GH, [{ p:[-2.15, 6.1], w:2.8, sill:0, head:2.4, kind:'garage' }, { p:[2.15, 6.1], w:2.8, sill:0, head:2.4, kind:'garage' }]),
+  W([4.3, 6.1], [4.3, 12.3], Y_GAR, GH), W([4.3, 12.3], [-4.3, 12.3], Y_GAR, GH), W([-4.3, 12.3], [-4.3, 6.1], Y_GAR, GH),
+  W([0, 6.1], [0, 12.3], Y_GAR, GH, [], { inner:true }),
+];
+const sideRetaining = [W([GFW, 6.0], [GFW, 12.4], 1.1, Y_GF + 1.0 - 1.1), W([-GFW, 12.4], [-GFW, 6.0], 1.1, Y_GF + 1.0 - 1.1)];
+const gfH = GF_TOP - Y_GF;
+const gfFrontA = [-GFW, Z_GF0], gfFrontB = [GFW, Z_GF0];
+const gfWalls = [
+  W(gfFrontA, gfFrontB, Y_GF, topFromRoof(gfFrontA, gfFrontB, Y_GF, roofGF),
+    [{ p:[-3.33, Z_GF0], w:5.77, sill:0, head:2.7 }, { p:[3.33, Z_GF0], w:5.77, sill:0, head:2.7 }]),
+  W([GFW, Z_GF0], [GFW, Z_GF1], Y_GF, gfH, [{ p:[GFW, 17.4], w:2.0, sill:0.9, head:1.4 }, { p:[GFW, 20.4], w:0.87, sill:1.7, head:2.7 }]),
+  W([GFW, Z_GF1], [-GFW, Z_GF1], Y_GF, gfH, [{ p:[0, Z_GF1], w:2.8, sill:0, head:2.6, kind:'void' }]),
+  W([-GFW, Z_GF1], [-GFW, Z_GF0], Y_GF, gfH, [{ p:[-GFW, 17.4], w:2.0, sill:0.9, head:1.4 }, { p:[-GFW, 20.4], w:0.87, sill:1.7, head:2.7 }]),
+  W([1.5, Z_GF1], [1.5, Z_BUMP], Y_GF, gfH), W([1.5, Z_BUMP], [-1.5, Z_BUMP], Y_GF, gfH), W([-1.5, Z_BUMP], [-1.5, Z_GF1], Y_GF, gfH),
+  W([0, Z_GF0], [0, Z_BUMP], Y_GF, gfH, [], { inner:true }),
+];
+const ffA = [-FFW, Z_FF0], ffB = [FFW, Z_FF0], ffC = [FFW, Z_GF1], ffD = [-FFW, Z_GF1];
+const win = (p, w, sill) => ({ p, w, sill, head:2.4 });
+const ffWalls = [
+  W(ffA, ffB, Y_FF, topFromRoof(ffA, ffB, Y_FF, roofFF), [win([-4.6, Z_FF0], 2.2, .95), win([-1.6, Z_FF0], 1.6, 1.5), win([1.6, Z_FF0], 1.6, 1.5), win([4.6, Z_FF0], 2.2, .95)]),
+  W(ffB, ffC, Y_FF, roofFF(FFW) - Y_FF, [win([FFW, 17.6], 1.6, 1.5), win([FFW, 21], 0.65, 1.2)]),
+  W(ffC, ffD, Y_FF, topFromRoof(ffC, ffD, Y_FF, roofFF), [win([3.2, Z_GF1], 2.2, 1.8), win([-3.2, Z_GF1], 2.2, 1.8)]),
+  W(ffD, ffA, Y_FF, roofFF(FFW) - Y_FF, [win([-FFW, 17.6], 1.6, 1.5), win([-FFW, 21], 0.65, 1.2)]),
+  W([0, Z_FF0], [0, Z_GF1], Y_FF, Y_RIDGE - Y_FF, [], { inner:true }),
+];
+
+/* ---------- Terrain (morphs between natural and finished levels) ---------- */
+function finished(x, z) {
+  const ax = Math.abs(x), n = nat(z);
+  if (ax < 4.4 && z >= 0 && z < Z_GAR0) return Math.min(n, (Y_GAR - 0.02) * z / Z_GAR0);
+  if (ax < 4.4 && z >= Z_GAR0 && z < Z_GAR1) return Y_GAR - 0.17;
+  if (ax < 7.0 && z >= Z_GAR1 && z < 25.0) return Y_GF - 0.21;
+  return n;
+}
+const inStrip = (x, z) => Math.abs(x) < 7.3 && z > 0.6 && z < 26.5;
+const underBuild = (x, z) => (Math.abs(x) < 7.0 && z >= Z_GAR1 - .2 && z < 25.2) || (Math.abs(x) < 4.6 && z < Z_GAR1);
+const TX0 = -10, TX1 = 10, TZ0 = 0, TZ1 = 40, TS = 0.2;
+const tnx = Math.round((TX1 - TX0) / TS) + 1, tnz = Math.round((TZ1 - TZ0) / TS) + 1;
+const tPos = new Float32Array(tnx * tnz * 3), tCol = new Float32Array(tnx * tnz * 3), tNat = new Float32Array(tnx * tnz), tFin = new Float32Array(tnx * tnz);
+const tFlag = new Uint8Array(tnx * tnz), tIdx = [];
+for (let j = 0; j < tnz; j++) for (let i = 0; i < tnx; i++) {
+  const k = j * tnx + i, x = TX0 + i * TS, z = TZ0 + j * TS;
+  tNat[k] = nat(z); tFin[k] = finished(x, z); tFlag[k] = (inStrip(x, z) ? 1 : 0) | (underBuild(x, z) ? 2 : 0);
+  tPos[k * 3] = x; tPos[k * 3 + 1] = tNat[k]; tPos[k * 3 + 2] = z;
+  if (i < tnx - 1 && j < tnz - 1) tIdx.push(k, k + tnx, k + 1, k + 1, k + tnx, k + tnx + 1);
+}
+const tGeo = new THREE.BufferGeometry();
+tGeo.setAttribute('position', new THREE.BufferAttribute(tPos, 3));
+tGeo.setAttribute('color', new THREE.BufferAttribute(tCol, 3));
+tGeo.setIndex(tIdx);
+const terrain = new THREE.Mesh(tGeo, new THREE.MeshStandardMaterial({ vertexColors:true, roughness:1 }));
+terrain.receiveShadow = true; scene.add(terrain);
+const GRASS = [0.40, 0.56, 0.29], DIRT = [0.60, 0.47, 0.33], CUT = [0.52, 0.40, 0.29];
+let tKey = '';
+function updateTerrain(s1, s2, s16) {
+  const key = s1.toFixed(3) + s2.toFixed(3) + s16.toFixed(3); if (key === tKey) return; tKey = key;
+  for (let k = 0; k < tnx * tnz; k++) {
+    const y = tNat[k] + (tFin[k] - tNat[k]) * s2; tPos[k * 3 + 1] = y;
+    let d = (tFlag[k] & 1) ? s1 : 0; if (!(tFlag[k] & 2)) d *= 1 - s16;
+    const cut = Math.min(1, (tNat[k] - y) * 1.5), n = 0.94 + 0.06 * Math.sin(k * 12.9898) ;
+    for (let c = 0; c < 3; c++) { const base = DIRT[c] + (CUT[c] - DIRT[c]) * cut; tCol[k * 3 + c] = (GRASS[c] + (base - GRASS[c]) * d) * n; }
+  }
+  tGeo.attributes.position.needsUpdate = true; tGeo.attributes.color.needsUpdate = true; tGeo.computeVertexNormals();
+}
+
+/* ---------- Static context: surrounds, street, neighbours, lot boundary ---------- */
+{
+  const ctx = new THREE.Group(); scene.add(ctx);
+  const xs = [], zs = []; for (let x = -70; x <= 70; x += 2) xs.push(x); for (let z = -30; z <= 110; z += 2) zs.push(z);
+  const pos = [], idx = [];
+  for (const z of zs) for (const x of xs) pos.push(x, nat(z), z);
+  for (let j = 0; j < zs.length - 1; j++) for (let i = 0; i < xs.length - 1; i++) {
+    const cx = xs[i] + 1, cz = zs[j] + 1; if (cx > TX0 && cx < TX1 && cz > TZ0 && cz < TZ1) continue;
+    const k = j * xs.length + i; idx.push(k, k + xs.length, k + 1, k + 1, k + xs.length, k + xs.length + 1);
+  }
+  const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); sg.setIndex(idx); sg.computeVertexNormals();
+  const sm = new THREE.Mesh(sg, std(0x66904a, { roughness:1 })); sm.receiveShadow = true; ctx.add(sm);
+  box(ctx, -70, 70, -0.05, 0.02, -12, -2.2, M.road, false);
+  box(ctx, -70, 70, 0, 0.14, -2.2, -2.0, M.kerb, false);
+  for (const s of [-1, 1]) {                                            // neighbouring houses as soft massing
+    const n = box(ctx, s * 10.2, s * 21, 1.2, 7.2, 8, 23, M.nb); n.castShadow = false;
+    const n2 = box(ctx, s * 26, s * 37, 1.2, 6.2, 9, 22, M.nb); n2.castShadow = false;
+  }
+  const pts = [[-HALF, 0], [HALF, 0], [HALF, LOT_D], [-HALF, LOT_D], [-HALF, 0]].map(([x, z]) => new THREE.Vector3(x, nat(z) + 0.12, z));
+  ctx.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineDashedMaterial({ color:0xffffff, dashSize:.5, gapSize:.3 })).computeLineDistances());
+  for (const [x, z] of [[-HALF, 0], [HALF, 0], [HALF, LOT_D], [-HALF, LOT_D]]) box(ctx, x - .05, x + .05, nat(z), nat(z) + 0.7, z - .05, z + .05, M.render, false);
+}
+function tree(g, x, z, h, mat = M.leaf) {
+  const y = nat(z); pipe(g, [x, y, z], [x, y + h * .5, z], h * .035, M.trunk);
+  const m = new THREE.Mesh(new THREE.IcosahedronGeometry(h * .32, 1), mat); m.position.set(x, y + h * .68, z); m.scale.y = 1.15; add(g, m, false);
+}
+
+/* ---------- Existing site (removed in stage 1) ---------- */
+const existing = new THREE.Group(); scene.add(existing);
+{
+  const y = nat(11);
+  box(existing, -5.2, 4.2, y - .6, y + 3.0, 11, 22, M.old);
+  const r = new THREE.Mesh(new THREE.ConeGeometry(8.6, 2.1, 4), M.oldRoof); r.rotation.y = Math.PI / 4; r.scale.set(1, 1, 1.15); r.position.set(-.5, y + 4.05, 16.5); add(existing, r);
+  box(existing, 4.2, 7.0, y - .6, y + 2.4, 13, 18.5, M.old);
+  const dw = new THREE.Mesh(new THREE.BoxGeometry(3, .08, 13.2), M.concDark); dw.position.set(5.4, nat(6.5) + .05, 6.5); dw.rotation.x = -Math.atan(8.5 / LOT_D); add(existing, dw, false);
+  tree(existing, -5.5, 5, 6); tree(existing, 1, 4, 4.5, M.leaf2); tree(existing, -3, 27, 7); tree(existing, 4.5, 30, 5.5, M.leaf2); tree(existing, 0, 33.5, 6.5);
+}
+
+/* ---------- Stage collections stage_01 .. stage_16 ---------- */
+const G = []; for (let i = 0; i <= 16; i++) { const g = new THREE.Group(); g.name = 'stage_' + String(i).padStart(2, '0'); g.userData.t = 0; scene.add(g); G.push(g); }
+
+{ // 1 site strip: temporary fencing, sediment fence, set-out pegs
+  const g = new THREE.Group(); g.name = 'temporary_works'; G[1].add(g); G[1].userData.temp = g;
+  const run = (x0, z0, x1, z1) => { const n = Math.ceil(Math.hypot(x1 - x0, z1 - z0) / 2.4);
+    for (let i = 0; i < n; i++) { const a = i / n, b = (i + 1) / n, xa = x0 + (x1 - x0) * a, za = z0 + (z1 - z0) * a, xb = x0 + (x1 - x0) * b, zb = z0 + (z1 - z0) * b;
+      const ya = nat(za), yb = nat(zb), geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute([xa, ya, za, xb, yb, zb, xb, yb + 1.8, zb, xa, ya + 1.8, za], 3)); geo.setIndex([0, 1, 2, 0, 2, 3]); geo.computeVertexNormals();
+      const m = new THREE.Mesh(geo, M.mesh); g.add(m); pipe(g, [xa, ya, za], [xa, ya + 1.9, za], .03, M.frame); } };
+  run(-HALF + .15, 0.3, HALF - .15, 0.3); run(HALF - .15, 0.3, HALF - .15, 28); run(-HALF + .15, 28, -HALF + .15, 0.3);
+  for (const [x, z] of [[-GFW, 6], [GFW, 6], [-GFW, Z_GF1], [GFW, Z_GF1], [-4.4, 12.4], [4.4, 12.4], [0, 6], [0, Z_BUMP]])
+    box(g, x - .04, x + .04, nat(z), nat(z) + .9, z - .04, z + .04, M.hot, false);
+}
+// 2 terrain: handled by the terrain morph
+{ // 3 footings
+  const g = G[3], yg = Y_GAR - .15, yd = Y_GF - .2, f = .25;
+  for (const x of [-4.3, 0, 4.3]) box(g, x - f, x + f, yg - .5, yg, 6, 12.4, M.concDark);
+  for (const z of [6.1, 12.3]) box(g, -4.3, 4.3, yg - .5, yg, z - f, z + f, M.concDark);
+  for (const x of [-GFW, 0, GFW]) box(g, x - f, x + f, yd - .5, yd, Z_GAR1 + .4, Z_GF1, M.concDark);
+  for (const z of [Z_GAR1 + .65, 17.6, Z_GF1]) box(g, -GFW, GFW, yd - .5, yd, z - f, z + f, M.concDark);
+  box(g, -1.5, 1.5, yd - .5, yd, Z_BUMP - f, Z_BUMP + f, M.concDark);
+  for (const s of [-1, 1]) box(g, s * GFW - f, s * GFW + f, .5, 1.1, 6, 12.4, M.concDark);
+  for (let x = -6; x <= 6; x += 2) pipe(g, [x, yd - 2.2, 24.6], [x, yd, 24.6], .22, M.concDark);
+}
+box(G[4], -4.4, 4.4, Y_GAR - .15, Y_GAR, 6.0, Z_GAR1, M.conc);                 // 4 garage slab
+for (const w of [...garageWalls, ...sideRetaining]) wallSheet(G[5], w, -.1, .2, M.block);   // 5 garage walls
+{ // 6 suspended slab + ground floor slab
+  const g = G[6];
+  box(g, -4.4, 4.4, Y_GF - .2, Y_GF, 6.0, Z_GAR1, M.conc);
+  for (const s of [-1, 1]) box(g, s * 4.4, s * GFW, Y_GF - .2, Y_GF, 10.4, Z_GAR1, M.conc);
+  box(g, -GFW, GFW, Y_GF - .2, Y_GF, Z_GAR1, Z_GF1, M.conc);
+  box(g, -1.5, 1.5, Y_GF - .2, Y_GF, Z_GF1, Z_BUMP, M.conc);
+}
+for (const w of gfWalls) wallStuds(G[7], w);                                     // 7 ground floor walls
+{ // 8 first floor framing
+  const g = G[8];
+  for (let z = Z_FF0; z <= Z_GF1 + .01; z += .45) box(g, -FFW, FFW, GF_TOP, Y_FF - .03, z - .0225, z + .0225, M.timber, false);
+  for (const x of [-FFW, 0, FFW]) box(g, x - .045, x + .045, GF_TOP, Y_FF - .03, Z_FF0, Z_GF1, M.timberDark, false);
+  box(g, -FFW, FFW, Y_FF - .03, Y_FF, Z_FF0, Z_GF1, M.floor);
+}
+for (const w of ffWalls) wallStuds(G[9], w);                                     // 9 first floor walls
+const RZ0 = Z_FF0 - .45, RZ1 = Z_GF1 + .45, AZ0 = 8.8;                           // main roof and lower roof / awning extents
+{ // 10 roof framing
+  const g = G[10];
+  for (const s of [-1, 1]) {
+    for (let z = RZ0; z <= RZ1 + .01; z += .9) roofPlane(g, s * (FFW + .45), z - .0225, z + .0225, Y_RIDGE, .19, M.timber, .1, false);
+    for (let z = AZ0; z < Z_FF0; z += .9) roofPlane(g, s * (GFW + .3), z - .0225, z + .0225, GF_PEAK, .19, M.timber, .1, false);
+    for (const x of [1.6, 3.2, 4.8]) { box(g, s * x - .0225, s * x + .0225, roofFF(x) - .05, roofFF(x), RZ0, RZ1, M.timberDark, false);
+      box(g, s * x - .0225, s * x + .0225, roofGF(x) - .05, roofGF(x), AZ0, Z_FF0, M.timberDark, false); }
+    box(g, s * GFW - .06, s * GFW + .06, Y_GF, roofGF(GFW) - .2, AZ0 + .2, AZ0 + .32, M.timberDark);
+  }
+  box(g, -.06, .06, Y_GF, GF_PEAK - .2, AZ0 + .2, AZ0 + .32, M.timberDark);
+  box(g, -.045, .045, Y_RIDGE - .3, Y_RIDGE - .02, RZ0, RZ1, M.timberDark);
+  box(g, -.045, .045, GF_PEAK - .3, GF_PEAK - .02, AZ0, Z_FF0, M.timberDark);
+}
+{ // 11 roof cladding
+  const g = G[11];
+  for (const s of [-1, 1]) {
+    roofPlane(g, s * (FFW + .45), RZ0, RZ1, Y_RIDGE, .05, M.roof, -.03);
+    roofPlane(g, s * (GFW + .3), AZ0, Z_FF0, GF_PEAK, .05, M.roof, -.03);
+    for (const z of [RZ0, RZ1]) roofPlane(g, s * (FFW + .45), z - .02, z + .02, Y_RIDGE, .24, M.fascia, .1, false);
+    roofPlane(g, s * (GFW + .3), AZ0 - .02, AZ0 + .02, GF_PEAK, .24, M.fascia, .1, false);
+  }
+}
+{ // 12 external cladding
+  const g = G[12];
+  for (const w of gfWalls) if (!w.inner) wallSheet(g, w, -.075, .03, M.render);
+  for (const w of ffWalls) if (!w.inner) wallSheet(g, w, -.075, .03, M.wb);
+  for (const w of [...garageWalls, ...sideRetaining]) if (!w.inner) wallSheet(g, w, -.125, .025, M.render);
+  box(g, -4.4, 4.4, Y_GF - .22, Y_GF + .02, 5.97, 6.0, M.render, false);
+}
+for (const w of [...gfWalls, ...ffWalls]) wallGlazing(G[13], w, -.02);            // 13 windows and doors
+wallGlazing(G[13], garageWalls[0], -.06);
+{ // 14 internal linings
+  const g = G[14];
+  for (const w of [...gfWalls, ...ffWalls]) { wallSheet(g, w, .045, .013, M.lining); if (w.inner) wallSheet(g, w, -.058, .013, M.lining); }
+  for (const s of [-1, 1]) {
+    box(g, s * .06, s * (GFW - .06), GF_TOP - .02, GF_TOP - .007, Z_FF0, Z_GF1 - .06, M.lining, false);
+    box(g, s * .06, s * (FFW - .06), roofFF(FFW) - .03, roofFF(FFW) - .017, Z_FF0 + .06, Z_GF1 - .06, M.lining, false);
+    box(g, s * 2.6, s * 2.69, Y_GF, GF_TOP - .02, 18.6, Z_GF1 - .06, M.lining);     // kitchen / laundry partitions
+    box(g, s * 2.6, s * (GFW - .06), Y_GF, GF_TOP - .02, 18.6, 18.69, M.lining);
+    box(g, s * .06, s * (FFW - .06), Y_FF, roofFF(FFW) - .03, 18.2, 18.29, M.lining);  // bedroom partition
+  }
+}
+{ // 15 services rough-in (placeholder massing)
+  const g = G[15];
+  for (const s of [-1, 1]) {
+    const x = s * 5.6, xi = s * (GFW - .25);
+    pipe(g, [s * 6.9, nat(.6) - .3, .6], [s * 6.9, nat(12.6) - .3, 12.6], .04, M.water);
+    pipe(g, [s * 6.9, nat(12.6) - .3, 12.6], [s * 6.9, Y_GF + .3, 12.6], .04, M.water);
+    pipe(g, [s * 6.9, Y_GF + .3, 12.6], [xi, Y_GF + .3, 19.5], .04, M.water);
+    pipe(g, [xi, Y_GF + .3, 19.5], [xi, Y_FF + 1.0, 19.5], .04, M.water);
+    pipe(g, [xi - s * .12, Y_GF + .3, 21.5], [xi - s * .12, Y_FF + 1.0, 21.5], .035, M.hot);
+    pipe(g, [xi - s * .12, Y_GF + .3, 21.5], [xi - s * .12, Y_GF + .3, 17.5], .035, M.hot);
+    pipe(g, [x, Y_GF - .35, 21.5], [x, Y_GF - .35, 12.5], .075, M.sewer);
+    pipe(g, [x, Y_GF - .35, 12.5], [x, nat(12.3) - .45, 12.3], .075, M.sewer);
+    pipe(g, [x, nat(12.3) - .45, 12.3], [x, nat(1) - .45, 1.0], .075, M.sewer);
+    pipe(g, [x, Y_FF + .4, 21.5], [x, Y_GF - .35, 21.5], .06, M.sewer);
+    pipe(g, [s * .35, Y_GAR + 2.9, 6.3], [s * .35, Y_GAR + 2.9, 12.1], .03, M.elec);
+    pipe(g, [s * .35, Y_GAR + 2.9, 12.1], [s * .35, GF_TOP - .15, 12.6], .03, M.elec);
+    pipe(g, [s * .35, GF_TOP - .15, 12.6], [s * .35, GF_TOP - .15, 14.4], .03, M.elec);
+    pipe(g, [s * .35, GF_TOP - .15, 14.4], [s * .35, Y_FF + 2.3, 14.4], .03, M.elec);
+    pipe(g, [s * .35, Y_FF + 2.3, 14.4], [s * .35, Y_FF + 2.3, 22.4], .03, M.elec);
+    box(g, s * .25, s * .7, Y_GAR + 1.2, Y_GAR + 1.9, 6.35, 6.5, M.elec);
+    box(g, s * .8, s * 5.6, GF_TOP - .32, GF_TOP - .08, 15.2, 15.7, M.duct);
+    box(g, s * 3.0, s * 3.5, GF_TOP - .32, GF_TOP - .08, 15.7, 21.5, M.duct);
+    box(g, s * 6.75, s * 7.0, Y_GF - .2, Y_GF + .75, 15.2, 16.1, M.duct);
+    const t = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, 1.6, 16), M.duct); t.position.set(s * 4.2, Y_GF - .2 + .8, 23.5); add(g, t);
+  }
+}
+{ // 16 finishes
+  const g = G[16];
+  const dw = new THREE.Mesh(new THREE.BoxGeometry(8.8, .1, Math.hypot(6, Y_GAR)), M.conc);
+  dw.position.set(0, Y_GAR / 2 - .04, 3); dw.rotation.x = -Math.atan(Y_GAR / 6); add(g, dw);
+  box(g, -3.2, 3.2, -.02, .06, -2.0, .1, M.conc, false);
+  box(g, -4.4, 4.4, Y_GF, Y_GF + .025, 6.0, Z_GF0 - .05, M.tile);
+  for (const s of [-1, 1]) {
+    box(g, s * 4.4, s * GFW, Y_GF, Y_GF + .025, 10.4, Z_GF0 - .05, M.tile);
+    const y0 = nat(6.2), n = 16, rise = (Y_GF - y0) / n;                         // side entry stairs
+    for (let i = 0; i < n; i++) box(g, s * 4.5, s * (GFW - .1), y0 + rise * i - .4, y0 + rise * (i + 1), 6.0 + i * .275, 6.0 + (i + 1) * .275 + .001, M.conc, false);
+    const yb = Y_GF + .025;
+    box(g, s * .15, s * 4.38, yb, yb + 1.05, 6.02, 6.04, M.glass, false).castShadow = false;
+    box(g, s * 4.37, s * 4.39, yb, yb + 1.05, 6.02, 10.4, M.glass, false).castShadow = false;
+    box(g, s * .15, s * 4.4, yb + 1.05, yb + 1.09, 6.0, 6.06, M.frame, false);
+    for (let z = 1; z < LOT_D; z += 2.4) { const z1 = Math.min(z + 2.4, LOT_D), y = Math.max(nat(z1), 0);  // boundary fencing
+      box(g, s * HALF - .02, s * HALF + .02, nat(z) - .2, y + 1.8, z, z1, M.fence, false); }
+    box(g, s * 1.6, s * 6.9, Y_GF - .2, Y_GF - .16, Z_GF1 + .05, 24.95, M.pave, false);
+    tree(g, s * 5.2, 29, 4.2, M.leaf2); tree(g, s * 2.2, 33.5, 5.2);
+    for (let z = 1.2; z < 5.5; z += 1.1) { const b = new THREE.Mesh(new THREE.IcosahedronGeometry(.42, 1), M.leaf); b.position.set(s * 5.6, nat(z) + .3, z); add(g, b, false); }
+  }
+  for (let x = -HALF; x < HALF; x += 2.4) box(g, x, Math.min(x + 2.4, HALF), nat(LOT_D) - .1, nat(LOT_D) + 1.8, LOT_D - .02, LOT_D + .02, M.fence, false);
+  box(g, -.12, .12, Y_GF, Y_GF + 1.8, 6.1, Z_GF0 - .1, M.render);              // deck privacy screen on the party line
+  box(g, -7.0, 7.0, Y_GF - .21, nat(25) + .15, 25.0, 25.2, M.block);           // rear retaining wall
+}
+for (const g of G) g.traverse(o => { if (o.isMesh) o.userData.mat = o.material; });
+
+/* ---------- State and animation ---------- */
+let stage = 0, playing = false, playTimer = 0, isolate = false, section = false, narrate = false;
+const ease = t => 1 - Math.pow(1 - t, 3);
+function applyGhost() {
+  G.forEach((g, i) => g.traverse(o => {
+    if (o.isMesh) o.material = (isolate && i < stage) ? M.ghost : o.userData.mat;
+    if (o.isLineSegments) o.visible = !(isolate && i < stage);
+    if (o.isMesh) o.castShadow = !(isolate && i < stage) && o.userData.mat !== M.glass && o.userData.mat !== M.mesh;
+  }));
+}
+function setStage(n, say = true) {
+  stage = Math.max(0, Math.min(16, n));
+  const s = STAGES[stage], wk0 = STAGES.slice(0, stage).reduce((a, x) => a + x.wk, 0);
+  ik.textContent = `Stage ${stage} of 16`; ih.textContent = s.n; ip.textContent = s.d; irl.textContent = s.rl;
+  iwk.textContent = stage ? `Wk ${wk0 + 1} to ${wk0 + s.wk} of ${TOTAL_WK}` : `${TOTAL_WK} weeks total`;
+  document.querySelector('#bar i').style.width = (stage / 16 * 100) + '%';
+  tl.value = stage; lbl.textContent = `${stage} / 16`;
+  document.querySelectorAll('.st').forEach((b, i) => { b.classList.toggle('cur', i === stage); b.classList.toggle('done', i < stage);
+    if (i === stage) b.scrollIntoView({ block:'nearest', inline:'nearest' }); });
+  applyGhost();
+  if (say) speak(stage ? `Stage ${stage}. ${s.n}. ${s.d}` : s.d);
+}
+function setPlay(p) { playing = p; playTimer = 0; play.innerHTML = p ? '&#10074;&#10074;' : '&#9654;'; if (p && stage >= 16) setStage(0, false); }
+
+const VIEWS = { nw:[[-27, 15, -22], [0, 5.2, 14]], street:[[-3, 3.2, -15], [0, 5.5, 12]], aerial:[[-6, 62, 6], [0, 2, 18]], rear:[[20, 24, 52], [0, 5, 16]] };
+let camAnim = null;
+function goView(name) { const v = VIEWS[name]; if (!v) return; camAnim = { p0:camera.position.clone(), t0:controls.target.clone(), p1:new THREE.Vector3(...v[0]), t1:new THREE.Vector3(...v[1]), t:0 }; }
+camera.position.set(...VIEWS.nw[0]); controls.target.set(...VIEWS.nw[1]);
+
+function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.fov = w < 700 ? 52 : 38; camera.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), .05);
+  if (playing) { playTimer += dt; if (playTimer > 1.9) { playTimer = 0; if (stage < 16) setStage(stage + 1); else setPlay(false); } }
+  G.forEach((g, i) => {
+    const target = i <= stage && i > 0 ? 1 : 0;
+    g.userData.t += Math.sign(target - g.userData.t) * Math.min(Math.abs(target - g.userData.t), dt * 1.5);
+    const e = ease(g.userData.t); g.visible = g.userData.t > .001; g.position.y = (1 - e) * 7;
+    const sc = .6 + .4 * e; g.scale.set(1, sc, 1);
+  });
+  const s1 = ease(G[1].userData.t); G[1].userData.temp.visible = G[16].userData.t < .5;
+  existing.visible = s1 < .999; existing.position.y = -s1 * 7; existing.scale.setScalar(1 - s1 * .5);
+  updateTerrain(s1, ease(G[2].userData.t), ease(G[16].userData.t));
+  if (camAnim) { camAnim.t = Math.min(1, camAnim.t + dt / 1.1); const e = ease(camAnim.t);
+    camera.position.lerpVectors(camAnim.p0, camAnim.p1, e); controls.target.lerpVectors(camAnim.t0, camAnim.t1, e); if (camAnim.t >= 1) camAnim = null; }
+  controls.update(); renderer.render(scene, camera);
+});
+
+/* ---------- UI ---------- */
+const $ = id => document.getElementById(id);
+const [ik, ih, ip, irl, iwk, tl, lbl, play, reply, cmd, mic] = ['ik', 'ih', 'ip', 'irl', 'iwk', 'tl', 'lbl', 'play', 'reply', 'cmd', 'mic'].map($);
+STAGES.forEach((s, i) => { const b = document.createElement('button'); b.className = 'st'; b.innerHTML = `<span class="n">${i}</span><span>${s.n}</span>`;
+  b.onclick = () => { setPlay(false); setStage(i); }; $('stages').appendChild(b); });
+tl.oninput = () => { setPlay(false); setStage(+tl.value); };
+$('prev').onclick = () => { setPlay(false); setStage(stage - 1); };
+$('next').onclick = () => { setPlay(false); setStage(stage + 1); };
+play.onclick = () => setPlay(!playing);
+document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => goView(b.dataset.view));
+function setIsolate(v) { isolate = v; $('bIso').classList.toggle('on', v); applyGhost(); }
+function setSection(v) { section = v; $('bSec').classList.toggle('on', v); $('sec').style.display = v ? 'flex' : 'none'; clipPlane.constant = v ? -$('secR').value : 100; }
+function setNarrate(v) { narrate = v; $('bSay').classList.toggle('on', v); if (!v) try { speechSynthesis.cancel(); } catch (e) {} }
+$('bIso').onclick = () => setIsolate(!isolate);
+$('bSec').onclick = () => setSection(!section);
+$('secR').oninput = () => setSection(true);
+$('bSay').onclick = () => { setNarrate(!narrate); if (narrate) speak(`Stage ${stage}. ${STAGES[stage].n}.`); };
+addEventListener('keydown', e => { if (e.target === cmd) return;
+  if (e.key === 'ArrowRight') { setPlay(false); setStage(stage + 1); } if (e.key === 'ArrowLeft') { setPlay(false); setStage(stage - 1); } if (e.key === ' ') { e.preventDefault(); setPlay(!playing); } });
+
+/* ---------- SiteVoice commands (typed or spoken) ---------- */
+function speak(text) { if (!narrate) return; try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.rate = 1.02; speechSynthesis.speak(u); } catch (e) {} }
+function say(text) { reply.textContent = text; speak(text); }
+const NUMS = { zero:0, one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9, ten:10, eleven:11, twelve:12, thirteen:13, fourteen:14, fifteen:15, sixteen:16 };
+function run(raw) {
+  const q = raw.toLowerCase().trim(); if (!q) return;
+  const off = /\b(off|hide|disable|close|exit)\b/.test(q);
+  let m;
+  if (/what('?s| is) next|next stage is|coming up/.test(q)) return say(stage < 16 ? `Next is stage ${stage + 1}, ${STAGES[stage + 1].n}.` : 'That is the last stage. The shell is complete.');
+  if (/how long|program|weeks|duration|schedule/.test(q)) { const done = STAGES.slice(0, stage + 1).reduce((a, x) => a + x.wk, 0);
+    return say(`Indicative program is ${TOTAL_WK} weeks. Stage ${stage} finishes around week ${done}.`); }
+  if (/level|rl\b|height/.test(q)) return say('Garage FFL 18.730, suspended slab RL 22.230, first floor RL 25.600, ridge RL 29.520. Site falls from RL 18.00 at the street to 26.50 at the rear.');
+  if (/where are we|status|current/.test(q)) return say(`Stage ${stage} of 16, ${STAGES[stage].n}. ${STAGES[stage].d}`);
+  if (/section|cut ?away|inside|slice/.test(q) && !/cut ?\/? ?fill/.test(q)) { setSection(!off); return say(off ? 'Section cut off.' : 'Section cut on. Drag the Cut slider to move it.'); }
+  if (/isolate|focus|x-?ray|only this/.test(q)) { setIsolate(!off); return say(off ? 'Showing all stages.' : `Isolating stage ${stage}, earlier stages ghosted.`); }
+  if (/narrat|read (it )?out|mute|quiet|speak/.test(q)) { const on = !(off || /mute|quiet|stop/.test(q)); setNarrate(on); return say(on ? 'Narration on.' : 'Narration off.'); }
+  if (/street|front/.test(q) && /view|look|show|camera/.test(q)) { goView('street'); return say('Street view.'); }
+  if (/aerial|top|plan|bird/.test(q)) { goView('aerial'); return say('Aerial view.'); }
+  if (/rear|back ?yard|behind/.test(q)) { goView('rear'); return say('Rear view.'); }
+  if (/north|nw|cover|reset view|home/.test(q)) { goView('nw'); return say('North-west view, matching the DA cover sheet.'); }
+  if ((m = q.match(/(?:stage|step|number)\s*(\d{1,2}|[a-z]+)/)) || (m = q.match(/^(\d{1,2})$/))) { const n = m[1] in NUMS ? NUMS[m[1]] : parseInt(m[1], 10);
+    if (n >= 0 && n <= 16) { setPlay(false); setStage(n, false); return say(`Stage ${n}. ${STAGES[n].n}.`); } }
+  let best = -1, len = 0;
+  STAGES.forEach((s, i) => s.k.forEach(k => { if (q.includes(k) && k.length > len) { best = i; len = k.length; } }));
+  if (best >= 0) { setPlay(false); setStage(best, false); return say(`Stage ${best}. ${STAGES[best].n}.`); }
+  if (/pause|stop|hold/.test(q)) { setPlay(false); return say('Paused.'); }
+  if (/play|build|animate|run|go\b/.test(q)) { setPlay(true); return say('Playing the build sequence.'); }
+  if (/next|forward|continue/.test(q)) { setPlay(false); setStage(stage + 1, false); return say(`Stage ${stage}. ${STAGES[stage].n}.`); }
+  if (/back|previous|prior|undo/.test(q)) { setPlay(false); setStage(stage - 1, false); return say(`Stage ${stage}. ${STAGES[stage].n}.`); }
+  if (/start over|restart|reset|beginning|existing/.test(q)) { setPlay(false); setStage(0, false); return say('Back to the existing site.'); }
+  if (/end|final|everything|all stages/.test(q)) { setPlay(false); setStage(16, false); return say('Completed shell, all 16 stages.'); }
+  say('Try: "stage 7", "show roof framing", "what is next", "section cut", "street view", "how long", "play".');
+}
+cmd.addEventListener('keydown', e => { if (e.key === 'Enter') { run(cmd.value); cmd.value = ''; } });
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition; let rec = null;
+mic.onclick = () => {
+  if (!SR) return void (reply.textContent = 'Voice input is not available in this browser. Type the command instead.');
+  if (rec) { rec.stop(); return; }
+  try {
+    rec = new SR(); rec.lang = 'en-AU'; rec.interimResults = false;
+    rec.onresult = e => { const t = e.results[0][0].transcript; cmd.value = t; run(t); cmd.value = ''; };
+    rec.onerror = () => { reply.textContent = 'Microphone is blocked here. Type the command instead, or open the page file directly in Chrome.'; };
+    rec.onend = () => { rec = null; mic.classList.remove('live'); };
+    rec.start(); mic.classList.add('live'); reply.textContent = 'Listening...';
+  } catch (e) { rec = null; reply.textContent = 'Microphone is blocked here. Type the command instead.'; }
+};
+
+setStage(0, false);
+window.__sv = { setStage, run, goView, G };
+</script>
+</body>
+</html>
